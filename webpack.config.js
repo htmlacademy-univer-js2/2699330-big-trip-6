@@ -1,35 +1,27 @@
-const path = require('path');
+const path = require('node:path');
 const CopyPlugin = require('copy-webpack-plugin');
 const HtmlPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: './src/main.js',
   output: {
-    filename: 'bundle.[contenthash].js', 
+    filename: 'bundle.js',
     path: path.resolve(__dirname, 'build'),
-    clean: true, 
+    clean: true,
   },
-  devtool: 'source-map', 
-  plugins: [ 
-    new HtmlPlugin({
-      template: 'public/index.html',
-    }),
+  devtool: 'source-map',
+  plugins: [
     new CopyPlugin({
       patterns: [
-        {
-          from: 'public',
-          globOptions: {
-            ignore: ['**/index.html'],
-          },
-        },
+        { from: 'public', to: '.' }
       ],
     }),
   ],
   module: {
-    rules: [ 
+    rules: [
       {
         test: /\.js$/,
-        exclude: /(node_modules)/,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
@@ -37,10 +29,6 @@ module.exports = {
           },
         },
       },
-      {
-        test: /\.css$/i,
-        use: ['style-loader', 'css-loader']
-      },
-    ],
-  },
+    ]
+  }
 };
