@@ -79,7 +79,28 @@ export default class BoardPresenter {
   createPoint(callback) {
     this.#currentSortType = SortType.DAY;
     this.#filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+    this.#prepareBoardForNewPoint();
     this.#newPointPresenter.init(callback, this.destinations, this.offers);
+  }
+
+  handleNewPointFormClose() {
+    if (this.#pointsModel.points.length === 0) {
+      if (this.#boardContainer.contains(this.#eventListComponent.element)) {
+        remove(this.#eventListComponent);
+      }
+      this.#renderListEmpty();
+    }
+  }
+
+  #prepareBoardForNewPoint() {
+    if (this.#listEmptyComponent) {
+      remove(this.#listEmptyComponent);
+      this.#listEmptyComponent = null;
+    }
+
+    if (!this.#boardContainer.contains(this.#eventListComponent.element)) {
+      render(this.#eventListComponent, this.#boardContainer);
+    }
   }
 
   #handleModeChange = () => {
@@ -122,9 +143,12 @@ export default class BoardPresenter {
 
   #handleModelEvent = (updateType, data) => {
     switch (updateType) {
-      case UpdateType.PATCH:
-        this.#pointPresenters.get(data.id).init(data, this.destinations, this.offers);
+      case UpdateType.PATCH: {
+        const pointPresenter = this.#pointPresenters.get(data.id);
+        pointPresenter.init(data, this.destinations, this.offers);
+        pointPresenter.resetView();
         break;
+      }
       case UpdateType.MINOR:
         this.#clearBoard();
         this.#renderBoard();
@@ -133,14 +157,14 @@ export default class BoardPresenter {
         this.#clearBoard({resetSortType: true});
         this.#renderBoard();
         break;
-      case UpdateType.INIT:
+      case UpdateType.INIT: {
         this.#isLoading = false;
-        if (data && data.isError) {
-          this.#isError = true;
-        }
-        remove(this.#loadingComponent);
+        const isError = Boolean(data?.isError);
+        this.#clearBoard();
+        this.#isError = isError;
         this.#renderBoard();
         break;
+      }
     }
   };
 
@@ -198,8 +222,12 @@ export default class BoardPresenter {
     remove(this.#sortComponent);
     remove(this.#loadingComponent);
     remove(this.#failedLoadDataComponent);
+
+    this.#isError = false;
+
     if (this.#listEmptyComponent) {
       remove(this.#listEmptyComponent);
+      this.#listEmptyComponent = null;
     }
 
     if (resetSortType) {
@@ -222,6 +250,10 @@ export default class BoardPresenter {
     const pointCount = points.length;
 
     if (pointCount === 0) {
+      remove(this.#sortComponent);
+      if (this.#boardContainer.contains(this.#eventListComponent.element)) {
+        remove(this.#eventListComponent);
+      }
       this.#renderListEmpty();
       return;
     }

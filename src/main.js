@@ -38,6 +38,7 @@ const filterPresenter = new FilterPresenter({
 
 const handleNewPointFormClose = () => {
   document.querySelector('.trip-main__event-add-btn').disabled = false;
+  boardPresenter.handleNewPointFormClose();
 };
 
 const handleNewPointButtonClick = () => {
