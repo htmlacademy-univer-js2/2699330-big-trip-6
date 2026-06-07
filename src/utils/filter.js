@@ -2,7 +2,8 @@ import dayjs from 'dayjs';
 import {FilterType} from '../const.js';
 
 const isFuture = (dateFrom) => dayjs(dateFrom).isAfter(dayjs());
-const isPresent = (dateFrom, dateTo) => dayjs(dateFrom).isSame(dayjs()) || (dayjs(dateFrom).isBefore(dayjs()) && dayjs(dateTo).isAfter(dayjs()));
+const isPresent = (dateFrom, dateTo) =>
+  !dayjs(dateFrom).isAfter(dayjs()) && !dayjs(dateTo).isBefore(dayjs());
 const isPast = (dateTo) => dayjs(dateTo).isBefore(dayjs());
 
 const filter = {

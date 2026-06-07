@@ -1,5 +1,11 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
+const FilterLabel = {
+  everything: 'Everything',
+  future: 'Future',
+  present: 'Present',
+  past: 'Past',
+};
 
 function createFilterItemTemplate(filter, currentFilterType) {
   const {type, count} = filter;
@@ -14,7 +20,7 @@ function createFilterItemTemplate(filter, currentFilterType) {
         ${type === currentFilterType ? 'checked' : ''}
         ${count === 0 ? 'disabled' : ''}
       >
-      <label class="trip-filters__filter-label" for="filter-${type}">${type}</label>
+      <label class="trip-filters__filter-label" for="filter-${type}">${FilterLabel[type]}</label>
     </div>`
   );
 }

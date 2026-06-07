@@ -1,5 +1,6 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
+import he from 'he';
 import {POINT_TYPES} from '../const.js';
 import {humanizeFullDate} from '../utils/date.js';
 
@@ -24,9 +25,10 @@ function createEditPointTemplate(point, destinations, offers) {
   const pointTypeOffers = offers.find((offer) => offer.type === type);
   const currentPointOffers = pointTypeOffers ? pointTypeOffers.offers : [];
 
-  const destinationName = pointDestination ? pointDestination.name : '';
-  const destinationDescription = pointDestination ? pointDestination.description : '';
+  const destinationName = pointDestination ? he.encode(pointDestination.name) : '';
+  const destinationDescription = pointDestination ? he.encode(pointDestination.description) : '';
   const destinationPictures = pointDestination ? pointDestination.pictures : [];
+  const hasDestinationInfo = pointDestination && (pointDestination.description || destinationPictures.length);
 
   const typeList = POINT_TYPES.map((pointType) => `
     <div class="event__type-item">
@@ -41,7 +43,7 @@ function createEditPointTemplate(point, destinations, offers) {
       <div class="event__offer-selector">
         <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id}-${pointId}" type="checkbox" name="event-offer-${offer.id}" ${isChecked} data-offer-id="${offer.id}" ${isDisabled ? 'disabled' : ''}>
         <label class="event__offer-label" for="event-offer-${offer.id}-${pointId}">
-          <span class="event__offer-title">${offer.title}</span>
+          <span class="event__offer-title">${he.encode(offer.title)}</span>
           &plus;&euro;&nbsp;
           <span class="event__offer-price">${offer.price}</span>
         </label>
@@ -49,10 +51,10 @@ function createEditPointTemplate(point, destinations, offers) {
     `;
   }).join('');
 
-  const destinationOptions = destinations.map((dest) => `<option value="${dest.name}"></option>`).join('');
+  const destinationOptions = destinations.map((dest) => `<option value="${he.encode(dest.name)}"></option>`).join('');
 
   const picturesList = destinationPictures.map((pic) => `
-    <img class="event__photo" src="${pic.src}" alt="${pic.description}">
+    <img class="event__photo" src="${he.encode(pic.src)}" alt="${he.encode(pic.description)}">
   `).join('');
 
   let resetButtonLabel;
@@ -119,30 +121,32 @@ function createEditPointTemplate(point, destinations, offers) {
             </button>
           ` : ''}
         </header>
-        <section class="event__details">
-          ${currentPointOffers.length ? `
-            <section class="event__section  event__section--offers">
-              <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-              <div class="event__available-offers">
-                ${offersList}
-              </div>
-            </section>
-          ` : ''}
-
-          ${pointDestination ? `
-            <section class="event__section  event__section--destination">
-              <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-              <p class="event__destination-description">${destinationDescription}</p>
-              ${destinationPictures.length ? `
-                <div class="event__photos-container">
-                  <div class="event__photos-tape">
-                    ${picturesList}
-                  </div>
+        ${currentPointOffers.length || hasDestinationInfo ? `
+          <section class="event__details">
+            ${currentPointOffers.length ? `
+              <section class="event__section  event__section--offers">
+                <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+                <div class="event__available-offers">
+                  ${offersList}
                 </div>
-              ` : ''}
-            </section>
-          ` : ''}
-        </section>
+              </section>
+            ` : ''}
+
+            ${hasDestinationInfo ? `
+              <section class="event__section  event__section--destination">
+                <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+                ${destinationDescription ? `<p class="event__destination-description">${destinationDescription}</p>` : ''}
+                ${destinationPictures.length ? `
+                  <div class="event__photos-container">
+                    <div class="event__photos-tape">
+                      ${picturesList}
+                    </div>
+                  </div>
+                ` : ''}
+              </section>
+            ` : ''}
+          </section>
+        ` : ''}
       </form>
     </li>`
   );
@@ -269,13 +273,17 @@ export default class EditPointView extends AbstractStatefulView {
   };
 
   #dateFromChangeHandler = ([userDate]) => {
-    this.updateElement({
+    this._setState({
       dateFrom: userDate,
     });
+
+    if (this.#datepickerTo) {
+      this.#datepickerTo.set('minDate', userDate);
+    }
   };
 
   #dateToChangeHandler = ([userDate]) => {
-    this.updateElement({
+    this._setState({
       dateTo: userDate,
     });
   };
@@ -287,8 +295,12 @@ export default class EditPointView extends AbstractStatefulView {
       {
         dateFormat: 'd/m/y H:i',
         enableTime: true,
+        closeOnSelect: false,
         defaultDate: this._state.dateFrom,
         onChange: this.#dateFromChangeHandler,
+        onOpen: () => {
+          this.#datepickerTo?.close();
+        },
       },
     );
 
@@ -297,9 +309,13 @@ export default class EditPointView extends AbstractStatefulView {
       {
         dateFormat: 'd/m/y H:i',
         enableTime: true,
+        closeOnSelect: false,
         defaultDate: this._state.dateTo,
         minDate: this._state.dateFrom,
         onChange: this.#dateToChangeHandler,
+        onOpen: () => {
+          this.#datepickerFrom?.close();
+        },
       },
     );
   }

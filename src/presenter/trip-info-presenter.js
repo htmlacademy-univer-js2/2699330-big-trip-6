@@ -2,6 +2,7 @@ import TripInfoView from '../view/trip-info-view.js';
 import {render, remove, RenderPosition, replace} from '../framework/render.js';
 import {sortPointDay} from '../utils/sort.js';
 import {formatTripDates} from '../utils/date.js';
+import he from 'he';
 
 export default class TripInfoPresenter {
   #tripInfoContainer = null;
@@ -53,7 +54,7 @@ export default class TripInfoPresenter {
     // Route
     const cityNames = points.map((point) => {
       const destination = this.#pointsModel.destinations.find((dest) => dest.id === point.destination);
-      return destination ? destination.name : '';
+      return destination ? he.encode(destination.name) : '';
     });
 
     let routeTitle = '';

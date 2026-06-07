@@ -11,12 +11,19 @@ module.exports = {
   },
   devtool: 'source-map',
   plugins: [
+    new HtmlPlugin({
+      template: 'public/index.html',
+    }),
     new CopyPlugin({
       patterns: [
-        { from: 'public', to: '.' }
+        { from: 'public', to: '.', globOptions: { ignore: ['**/index.html'] } },
       ],
     }),
   ],
+  devServer: {
+    port: 8080,
+    open: true,
+  },
   module: {
     rules: [
       {
